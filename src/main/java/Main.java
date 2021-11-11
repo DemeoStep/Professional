@@ -6,28 +6,30 @@ public class Main {
     private static final String PASS = "myensql";
 
     public static void main(String[] args) {
+
         Connection connection = null;
-        Statement statement;
 
         try {
             connection = DriverManager.getConnection(URL, LOGIN, PASS);
-            statement = connection.createStatement();
-            ResultSet result = statement.executeQuery("SELECT * from persons");
 
-            while(result.next()) {
-                System.out.println(result.getString("name"));
-            }
+            task2_4.start(connection);
 
 
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             try {
-                connection.close();
+                if (connection != null) {
+                    connection.close();
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
 
+    }
+
+    static void printLine() {
+        System.out.println("----------------------------------------------------------------------------");
     }
 }
