@@ -10,33 +10,9 @@ import java.util.Optional;
 
 public class CarDAO implements ICarDAO{
 
-    private Connection getConnection() {
-        Optional<Connection> optional = Connector.getConnection();
-
-        if (optional.isEmpty()) {
-            throw new RuntimeException("DB connection error");
-        }
-
-        return optional.get();
-    }
-
-    private void closeConnections(Connection connection, Statement statement) {
-        try {
-            if(statement != null) {
-                statement.close();
-            }
-
-            if(!connection.isClosed()) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void add(Car car) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         if(getCarId(car).isEmpty()) {
@@ -60,7 +36,7 @@ public class CarDAO implements ICarDAO{
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
-                closeConnections(connection, statement);
+                Connector.closeConnections(connection, statement);
             }
         } else {
             System.out.println("Car is present in DB!");
@@ -69,7 +45,7 @@ public class CarDAO implements ICarDAO{
     }
 
     private void addMark(String mark) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -80,12 +56,12 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
     }
 
     private Optional<Long> getMarkId(String mark) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -100,7 +76,7 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
         return Optional.empty();
@@ -110,7 +86,7 @@ public class CarDAO implements ICarDAO{
     @Override
     public List<Car> getAll() {
         List<Car> carList = new ArrayList<>();
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -131,7 +107,7 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
         return carList;
@@ -139,7 +115,7 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public Optional<Car> getById(long id) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
         Car car = new Car();
 
@@ -160,7 +136,7 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
         return Optional.empty();
@@ -168,7 +144,7 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public Optional<Long> getCarId(Car car) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -190,7 +166,7 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
 
@@ -199,7 +175,7 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public void updateCar(Car car) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -214,14 +190,14 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
     }
 
     @Override
     public int removeById(long id) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         if(getById(id).isPresent()) {
@@ -233,7 +209,7 @@ public class CarDAO implements ICarDAO{
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
-                closeConnections(connection, statement);
+                Connector.closeConnections(connection, statement);
             }
         }
 
@@ -242,7 +218,7 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public int removeByMark(String mark) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         if(getMarkId(mark).isPresent()) {
@@ -254,7 +230,7 @@ public class CarDAO implements ICarDAO{
             } catch (SQLException e) {
                 e.printStackTrace();
             } finally {
-                closeConnections(connection, statement);
+                Connector.closeConnections(connection, statement);
             }
         }
 
@@ -263,7 +239,7 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public int removeByModel(String model) {
-        Connection connection = getConnection();
+        Connection connection = Connector.getConnection();
         PreparedStatement statement = null;
 
         try {
@@ -274,7 +250,7 @@ public class CarDAO implements ICarDAO{
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            closeConnections(connection, statement);
+            Connector.closeConnections(connection, statement);
         }
 
         return 0;

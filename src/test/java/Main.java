@@ -1,5 +1,8 @@
 import DAO.*;
 import Entity.Car;
+import Entity.Client;
+
+import java.util.List;
 
 public class Main {
     private final static IDAOFactory factory = DAOFactory.getInstance();
@@ -8,11 +11,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        carDAO.add(new Car("Audi", "A5", 40000));
-        carDAO.add(new Car("Porsche", "Panamera", 40000));
-        carDAO.add(new Car("Porsche", "Cayman", 40000));
-
-        printAll();
+        printAll(carDAO.getAll());
 
         Car car1 = new Car();
 
@@ -33,30 +32,47 @@ public class Main {
 
         carDAO.add(car2);
 
-        printAll();
+        printAll(carDAO.getAll());
 
         if(carDAO.getCarId(car2).isPresent()) {
             carDAO.removeById(carDAO.getCarId(car2).get());
         }
 
-        printAll();
+        printAll(carDAO.getAll());
 
         carDAO.add(new Car("BMW", "X5", 20000));
         carDAO.add(new Car("BMW", "i4", 30000));
-        printAll();
+        printAll(carDAO.getAll());
 
         carDAO.removeByModel("X5");
-        printAll();
+        printAll(carDAO.getAll());
 
         carDAO.removeByMark("BMW");
-        printAll();
+        printAll(carDAO.getAll());
 
+        printAll(clientDAO.getAllClients());
+
+        clientDAO.addClient(new Client("Алексей", 40, "066-771-82-71"));
+
+        printAll(clientDAO.getAllClients());
+
+        if (clientDAO.getClient(4).isPresent()) {
+            System.out.println(clientDAO.getClient(4).get());
+        }
+
+        System.out.println(clientDAO.updateClient(1, new Client("Петр", 20, "099-555-55-22")));
+
+        printAll(clientDAO.getAllClients());
+
+        System.out.println(clientDAO.deleteClient(4));
+
+        printAll(clientDAO.getAllClients());
     }
 
-    private static void printAll() {
+    private static <E> void printAll(List<E> list) {
         printLine();
-        for (Car car : carDAO.getAll()) {
-            System.out.println(car);
+        for (E item : list) {
+            System.out.println(item);
         }
         printLine();
     }

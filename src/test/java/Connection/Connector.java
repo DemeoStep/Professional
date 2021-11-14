@@ -3,6 +3,7 @@ package Connection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Optional;
 
 public class Connector {
@@ -10,7 +11,7 @@ public class Connector {
     private static final String LOGIN = "root";
     private static final String PASSWORD = "myensql";
 
-    public static Optional<Connection> getConnection() {
+    private static Optional<Connection> connect() {
         try {
             return Optional.of(DriverManager.getConnection(URL, LOGIN, PASSWORD));
         } catch (SQLException e) {
@@ -18,5 +19,29 @@ public class Connector {
         }
 
         return Optional.empty();
+    }
+
+    public static Connection getConnection() {
+        Optional<Connection> optional = connect();
+
+        if (optional.isEmpty()) {
+            throw new RuntimeException("DB connection error");
+        }
+
+        return optional.get();
+    }
+
+    public static void closeConnections(Connection connection, Statement statement) {
+        try {
+            if(statement != null) {
+                statement.close();
+            }
+
+            if(!connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

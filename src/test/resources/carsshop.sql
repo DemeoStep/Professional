@@ -11,11 +11,11 @@ CREATE TABLE marks
 );
 
 INSERT INTO carsshop.marks (mark) VALUES ('Audi');
-INSERT INTO carsshop.marks (mark) VALUES ('BMW');
+INSERT INTO carsshop.marks (mark) VALUES ('Porsche');
 
 CREATE TABLE cars
 (
-    id      INT AUTO_INCREMENT PRIMARY KEY,
+    id      INT         AUTO_INCREMENT PRIMARY KEY,
     mark_id INT         NOT NULL,
     model   VARCHAR(20) NOT NULL,
     price   INT         NOT NULL,
@@ -27,31 +27,28 @@ CREATE INDEX mark_id
     ON cars (mark_id);
 
 INSERT INTO carsshop.cars (mark_id, model, price) VALUES (1, 'A5', 40000);
-INSERT INTO carsshop.cars (mark_id, model, price) VALUES (2, 'panamera', 100000);
-INSERT INTO carsshop.cars (mark_id, model, price) VALUES (2, 'caymen S', 88000);
+INSERT INTO carsshop.cars (mark_id, model, price) VALUES (2, 'Panamera', 100000);
+INSERT INTO carsshop.cars (mark_id, model, price) VALUES (2, 'Cayman', 88000);
 
 CREATE TABLE clients
 (
-    id    INT AUTO_INCREMENT PRIMARY KEY,
-    name  VARCHAR(30) NULL,
-    age   TINYINT     NULL,
-    phone VARCHAR(15) NULL
+    id    INT           AUTO_INCREMENT PRIMARY KEY,
+    name  VARCHAR(30)   NOT NULL ,
+    age   TINYINT       NOT NULL ,
+    phone VARCHAR(15)   NOT NULL
 );
 
-INSERT INTO carsshop.clients (name, age, phone) VALUES ('petro', 20, null);
-INSERT INTO carsshop.clients (name, age, phone) VALUES ('vasya', 25, null);
-INSERT INTO carsshop.clients (name, age, phone) VALUES ('vitaly', 75, null);
+INSERT INTO carsshop.clients (name, age, phone) VALUES ('Petro', 20, '050-856-47-52');
+INSERT INTO carsshop.clients (name, age, phone) VALUES ('Vasya', 25, '063-457-81-55');
+INSERT INTO carsshop.clients (name, age, phone) VALUES ('Vitaly', 75, '099-758-43-16');
 
 CREATE TABLE orders
 (
-    id        INT AUTO_INCREMENT
-        PRIMARY KEY,
-    car_id    INT NOT NULL,
-    client_id INT NOT NULL,
-    CONSTRAINT orders_ibfk_1
-        FOREIGN KEY (car_id) REFERENCES cars (id),
-    CONSTRAINT orders_ibfk_2
-        FOREIGN KEY (client_id) REFERENCES clients (id)
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    car_id      INT NOT NULL,
+    client_id   INT NOT NULL,
+    CONSTRAINT orders_ibfk_1 FOREIGN KEY (car_id) REFERENCES cars (id),
+    CONSTRAINT orders_ibfk_2 FOREIGN KEY (client_id) REFERENCES clients (id)
 );
 
 CREATE INDEX car_id
