@@ -33,21 +33,37 @@ public class Main {
         markList.add(new Mark("BMW"));
         markList.add(new Mark("Lada"));
 
-        for (Mark mark: markList) {
+        for (Mark mark : markList) {
             markDAO.add(mark);
         }
-
-        markList = markDAO.getAll();
-        printAll(markList);
 
         carDAO.add(new Car("Lada", "Kalina", 7000));
         carDAO.add(new Car("Porsche", "911", 50000));
         carDAO.add(new Car("Toyota", "Camry", 40000));
 
-        List<Car> carList = carDAO.getAll();
-        printAll(carList);
+        printAll(carDAO.getAll());
 
         carDAO.getById(1).ifPresent(System.out::println);
+
+        carDAO.updateCar(1, new Car("BMW", "X5", 28000));
+
+        printAll(carDAO.getAll());
+
+        carDAO.removeById(3);
+
+        carDAO.add(new Car("Lada", "Kalina", 7000));
+        carDAO.add(new Car("Lada", "Priora", 9000));
+        carDAO.add(new Car("Lada", "Vesta", 10000));
+
+        printAll(carDAO.getAll());
+
+        carDAO.removeByMark("Lada");
+
+        printAll(carDAO.getAll());
+
+        carDAO.removeByModel("911");
+
+        printAll(carDAO.getAll());
 
     }
 

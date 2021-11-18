@@ -23,7 +23,7 @@ public class CarDAO implements CarRepository {
     @Override
     public void add(Car car) {
 
-        if(getCarId(car).isEmpty()) {
+        if (getCarId(car).isEmpty()) {
 
             try (Session session = factory.openSession()){
                 if(markDAO.getMarkId(new Mark(car.getMark())) == 0) {
@@ -91,8 +91,6 @@ public class CarDAO implements CarRepository {
         try (Session session = factory.openSession()){
             car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
 
-            System.out.println(car.getMarkId());
-
             Query<Car> query = session.createQuery("FROM Car WHERE markId = :markId AND model = :model AND price = :price", Car.class);
 
             query.setParameter("markId", car.getMarkId());
@@ -110,86 +108,85 @@ public class CarDAO implements CarRepository {
         return Optional.empty();
     }
 
-//    @Override
-//    public void updateCar(Car car) {
-//        Connection connection = Connector.getConnection();
-//        PreparedStatement statement = null;
-//
-//        try {
-//            statement = connection.prepareStatement("UPDATE cars SET mark_id = (SELECT id FROM marks WHERE mark = ?), model = ?, price = ? WHERE id = ?");
-//            statement.setString(1, car.getMark());
-//            statement.setString(2, car.getModel());
-//            statement.setInt(3, car.getPrice());
-//            statement.setLong(4, car.getId());
-//
-//            System.out.println("Values updated: " + statement.executeUpdate());
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        } finally {
-//            Connector.closeConnections(connection, statement);
-//        }
-//
-//    }
-//
-//    @Override
-//    public int removeById(long id) {
-//        Connection connection = Connector.getConnection();
-//        PreparedStatement statement = null;
-//
-//        if(getById(id).isPresent()) {
-//            try {
-//                statement = connection.prepareStatement("DELETE FROM cars WHERE id = ?");
-//                statement.setLong(1, id);
-//                return statement.executeUpdate();
-//
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            } finally {
-//                Connector.closeConnections(connection, statement);
-//            }
-//        }
-//
-//        return 0;
-//    }
-//
-//    @Override
-//    public int removeByMark(String mark) {
-//        Connection connection = Connector.getConnection();
-//        PreparedStatement statement = null;
-//
-//        if(getMarkId(mark).isPresent()) {
-//            try {
-//                statement = connection.prepareStatement("DELETE FROM cars WHERE mark_id = ?");
-//                statement.setLong(1, getMarkId(mark).get());
-//                return statement.executeUpdate();
-//
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            } finally {
-//                Connector.closeConnections(connection, statement);
-//            }
-//        }
-//
-//        return 0;
-//    }
-//
-//    @Override
-//    public int removeByModel(String model) {
-//        Connection connection = Connector.getConnection();
-//        PreparedStatement statement = null;
-//
-//        try {
-//            statement = connection.prepareStatement("DELETE FROM cars WHERE model = ?");
-//            statement.setString(1, model);
-//            return statement.executeUpdate();
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        } finally {
-//            Connector.closeConnections(connection, statement);
-//        }
-//
-//        return 0;
-//    }
+    @Override
+    public void updateCar(long id, Car car) {
+        try (Session session = factory.openSession()){
+            if (getById(id).isEmpty()) {
+                return;
+            }
+
+            session.beginTransaction();
+            Car oldCar = session.get(Car.class, id);
+
+            if(!oldCar.equals(car)) {
+                oldCar.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
+                oldCar.setMark(markDAO.getMark(oldCar.getMarkId()));
+                oldCar.setModel(car.getModel());
+                oldCar.setPrice(car.getPrice());
+            }
+
+            session.getTransaction().commit();
+
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void removeById(long id) {
+        try (Session session = factory.openSession()){
+            session.beginTransaction();
+            Car car = session.get(Car.class, id);
+            if (car != null) {
+                session.delete(car);
+            }
+            session.getTransaction().commit();
+
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void removeByMark(String mark) {
+        long markId = markDAO.getMarkId(new Mark(mark));
+        if(markId != 0) {
+            try (Session session = factory.openSession()){
+                session.beginTransaction();
+                List<Car> carList = session
+                        .createQuery("FROM Car WHERE markId = :markId", Car.class)
+                        .setParameter("markId", markId).list();
+
+                for (Car car: carList) {
+                    session.delete(car);
+                }
+
+                session.getTransaction().commit();
+
+            } catch (HibernateException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void removeByModel(String model) {
+        try (Session session = factory.openSession()){
+            session.beginTransaction();
+
+            List<Car> carList = session
+                    .createQuery("FROM Car WHERE model = :model", Car.class)
+                    .setParameter("model", model).list();
+
+            for (Car car: carList) {
+                session.delete(car);
+            }
+
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        }
+    }
 }

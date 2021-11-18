@@ -10,8 +10,8 @@ public interface CarRepository {
     List<Car> getAll();
     Optional<Car> getById(long id);
     Optional<Long> getCarId(Car car);
-//    void updateCar(Car car);
-//    int removeById(long id);
-//    int removeByMark(String mark);
-//    int removeByModel(String model);
+    void updateCar(long id, Car car);
+    void removeById(long id);
+    void removeByMark(String mark);
+    void removeByModel(String model);
 }

@@ -1,14 +1,17 @@
 package Entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Car {
     @Id
@@ -34,5 +37,18 @@ public class Car {
                 ", model='" + model + '\'' +
                 ", price=" + price +
                 "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Car car = (Car) o;
+        return markId == car.markId && price == car.price && Objects.equals(mark, car.mark) && Objects.equals(model, car.model);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(markId, mark, model, price);
     }
 }

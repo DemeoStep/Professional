@@ -9,10 +9,11 @@ import org.hibernate.query.Query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @ToString
 public class MarkDAO implements MarkRepository {
-    private SessionFactory factory;
+    private final SessionFactory factory;
 
     public MarkDAO(SessionFactory factory) {
         this.factory = factory;
