@@ -47,7 +47,8 @@ public class Main {
         List<Car> carList = carDAO.getAll();
         printAll(carList);
 
-        System.out.println(carDAO.getById(1).get());
+        carDAO.getById(1).ifPresent(System.out::println);
+
     }
 
     private static <E> void printAll(List<E> list) {
