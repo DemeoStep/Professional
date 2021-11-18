@@ -38,7 +38,7 @@ public class CarDAO implements CarRepository {
             }
 
         } else {
-            System.out.println("Car is present in DB!");
+            System.err.println("Car " + car + " is present in DB!");
         }
 
     }
@@ -68,14 +68,16 @@ public class CarDAO implements CarRepository {
         try (Session session = factory.openSession()) {
             Car car = new Car();
 
-            Query<Car> query = session.createQuery("FROM Car WHERE id = :id", Car.class);
-            query.setParameter("id", id);
+            Query<Car> query = session
+                    .createQuery("FROM Car WHERE id = :id", Car.class)
+                    .setParameter("id", id);
 
-            if (query.uniqueResultOptional().isPresent()) {
-                car = query.getSingleResult();
+            Optional<Car> result = query.uniqueResultOptional();
+
+            if (result.isPresent()) {
+                car = result.get();
+                car.setMark(markDAO.getMark(car.getMarkId()));
             }
-
-            car.setMark(markDAO.getMark(car.getMarkId()));
 
             return Optional.of(car);
 
@@ -97,8 +99,10 @@ public class CarDAO implements CarRepository {
             query.setParameter("model", car.getModel());
             query.setParameter("price", car.getPrice());
 
-            if (query.uniqueResultOptional().isPresent()) {
-                return Optional.of(query.getSingleResult().getId());
+            Optional<Car> result = query.uniqueResultOptional();
+
+            if (result.isPresent()) {
+                return Optional.of(result.get().getId());
             }
 
         } catch (HibernateException e) {

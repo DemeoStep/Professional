@@ -9,13 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    private static SessionFactory factory;
     private static CarRepository carDAO;
     private static MarkRepository markDAO;
     private static ClientRepository clientDAO;
 
     Main() {
-        factory = new Configuration().configure().buildSessionFactory();
+        SessionFactory factory = new Configuration().configure().buildSessionFactory();
         markDAO = new MarkDAO(factory);
         carDAO = new CarDAO(factory, markDAO);
         clientDAO = new ClientDAO(factory);
@@ -65,6 +64,20 @@ public class Main {
 
         printAll(carDAO.getAll());
 
+        clientDAO.addClient(new Client("Alex", 23, "050-555-55-55"));
+        clientDAO.addClient(new Client("Max", 25, "050-222-22-22"));
+
+        printAll(clientDAO.getAllClients());
+
+        clientDAO.getClient(1).ifPresent(System.out::println);
+
+        clientDAO.deleteClient(1);
+
+        printAll(clientDAO.getAllClients());
+
+        clientDAO.updateClient(2, new Client("MaXXX", 40, "050-333-33-33"));
+
+        printAll(clientDAO.getAllClients());
     }
 
     private static <E> void printAll(List<E> list) {
