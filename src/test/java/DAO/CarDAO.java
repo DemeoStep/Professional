@@ -1,113 +1,62 @@
 package DAO;
 
 import Entity.Car;
-import Connection.Connector;
+import Entity.Mark;
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class CarDAO implements ICarDAO{
+public class CarDAO implements CarRepository {
+    SessionFactory factory;
+    MarkRepository markDAO;
+
+    public CarDAO(SessionFactory factory, MarkRepository markDAO) {
+        this.factory = factory;
+        this.markDAO = markDAO;
+    }
 
     @Override
     public void add(Car car) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
 
         if(getCarId(car).isEmpty()) {
 
-            try {
-
-                if (getMarkId(car.getMark()).isEmpty()) {
-                    addMark(car.getMark());
+            try (Session session = factory.openSession()){
+                if(markDAO.getMarkId(new Mark(car.getMark())) == 0) {
+                    markDAO.add(new Mark(car.getMark()));
                 }
 
-                long markId = getMarkId(car.getMark()).get();
+                car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
+                session.save(car);
 
-                statement = connection.prepareStatement("INSERT INTO cars (mark_id, model, price) VALUES (?, ?, ?)");
-                statement.setLong(1, markId);
-                statement.setString(2, car.getModel());
-                statement.setInt(3, car.getPrice());
-
-                statement.executeUpdate();
-
-
-            } catch (SQLException e) {
+            } catch (HibernateException e) {
                 e.printStackTrace();
-            } finally {
-                Connector.closeConnections(connection, statement);
             }
+
         } else {
             System.out.println("Car is present in DB!");
         }
 
     }
 
-    private void addMark(String mark) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        try {
-            statement = connection.prepareStatement("INSERT INTO marks (mark) VALUE (?)");
-            statement.setString(1, mark);
-            statement.execute();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
-        }
-    }
-
-    private Optional<Long> getMarkId(String mark) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        try {
-            statement = connection.prepareStatement("SELECT id FROM marks WHERE mark = ?");
-            statement.setString(1, mark);
-            ResultSet result = statement.executeQuery();
-
-            if(result.next()) {
-                return Optional.of(result.getLong("id"));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
-        }
-
-        return Optional.empty();
-
-    }
-
     @Override
     public List<Car> getAll() {
         List<Car> carList = new ArrayList<>();
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
 
-        try {
-            statement = connection.prepareStatement("SELECT cars.id, marks.mark, cars.model, cars.price FROM cars JOIN marks ON marks.id = cars.mark_id;");
-            ResultSet result = statement.executeQuery();
+        try (Session session = factory.openSession()){
 
-            while (result.next()) {
-                Car car = new Car(
-                        result.getLong("id"),
-                        result.getString("mark"),
-                        result.getString("model"),
-                        result.getInt("price")
-                );
+            carList = session.createQuery("FROM Car", Car.class).list();
 
-                carList.add(car);
+            for (Car car: carList) {
+                car.setMark(markDAO.getMark(car.getMarkId()));
             }
 
-        } catch (SQLException e) {
+        } catch (HibernateException e) {
             e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
         }
 
         return carList;
@@ -115,28 +64,23 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public Optional<Car> getById(long id) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-        Car car = new Car();
 
-        try {
-            statement = connection.prepareStatement("SELECT cars.id, marks.mark, cars.model, cars.price FROM cars JOIN marks ON marks.id = cars.mark_id WHERE cars.id = ?;");
-            statement.setLong(1, id);
+        try (Session session = factory.openSession()) {
+            Car car = new Car();
 
-            ResultSet result = statement.executeQuery();
+            Query<Car> query = session.createQuery("FROM Car WHERE id = :id", Car.class);
+            query.setParameter("id", id);
 
-            if (result.next()) {
-                car.setId(result.getInt("id"));
-                car.setMark(result.getString("mark"));
-                car.setModel(result.getString("model"));
-                car.setPrice(result.getInt("price"));
+            if (query.uniqueResultOptional().isPresent()) {
+                car = query.getSingleResult();
             }
+
+            car.setMark(markDAO.getMark(car.getMarkId()));
+
             return Optional.of(car);
 
-        } catch (SQLException e) {
+        } catch (HibernateException e) {
             e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
         }
 
         return Optional.empty();
@@ -144,115 +88,108 @@ public class CarDAO implements ICarDAO{
 
     @Override
     public Optional<Long> getCarId(Car car) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
+        try (Session session = factory.openSession()){
+            car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
 
-        try {
-            statement = connection.prepareStatement("SELECT id FROM cars WHERE mark_id = ? AND model = ? AND price = ?");
-            if(getMarkId(car.getMark()).isPresent()) {
-                statement.setLong(1, getMarkId(car.getMark()).get());
-            } else {
-                return Optional.empty();
-            }
-            statement.setString(2, car.getModel());
-            statement.setInt(3, car.getPrice());
+            System.out.println(car.getMarkId());
 
-            ResultSet result = statement.executeQuery();
+            Query<Car> query = session.createQuery("FROM Car WHERE markId = :markId AND model = :model AND price = :price", Car.class);
 
-            if(result.next()) {
-                return Optional.of(result.getLong("id"));
+            query.setParameter("markId", car.getMarkId());
+            query.setParameter("model", car.getModel());
+            query.setParameter("price", car.getPrice());
+
+            if (query.uniqueResultOptional().isPresent()) {
+                return Optional.of(query.getSingleResult().getId());
             }
 
-        } catch (SQLException e) {
+        } catch (HibernateException e) {
             e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
         }
-
 
         return Optional.empty();
     }
 
-    @Override
-    public void updateCar(Car car) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        try {
-            statement = connection.prepareStatement("UPDATE cars SET mark_id = (SELECT id FROM marks WHERE mark = ?), model = ?, price = ? WHERE id = ?");
-            statement.setString(1, car.getMark());
-            statement.setString(2, car.getModel());
-            statement.setInt(3, car.getPrice());
-            statement.setLong(4, car.getId());
-
-            System.out.println("Values updated: " + statement.executeUpdate());
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
-        }
-
-    }
-
-    @Override
-    public int removeById(long id) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        if(getById(id).isPresent()) {
-            try {
-                statement = connection.prepareStatement("DELETE FROM cars WHERE id = ?");
-                statement.setLong(1, id);
-                return statement.executeUpdate();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                Connector.closeConnections(connection, statement);
-            }
-        }
-
-        return 0;
-    }
-
-    @Override
-    public int removeByMark(String mark) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        if(getMarkId(mark).isPresent()) {
-            try {
-                statement = connection.prepareStatement("DELETE FROM cars WHERE mark_id = ?");
-                statement.setLong(1, getMarkId(mark).get());
-                return statement.executeUpdate();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                Connector.closeConnections(connection, statement);
-            }
-        }
-
-        return 0;
-    }
-
-    @Override
-    public int removeByModel(String model) {
-        Connection connection = Connector.getConnection();
-        PreparedStatement statement = null;
-
-        try {
-            statement = connection.prepareStatement("DELETE FROM cars WHERE model = ?");
-            statement.setString(1, model);
-            return statement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            Connector.closeConnections(connection, statement);
-        }
-
-        return 0;
-    }
+//    @Override
+//    public void updateCar(Car car) {
+//        Connection connection = Connector.getConnection();
+//        PreparedStatement statement = null;
+//
+//        try {
+//            statement = connection.prepareStatement("UPDATE cars SET mark_id = (SELECT id FROM marks WHERE mark = ?), model = ?, price = ? WHERE id = ?");
+//            statement.setString(1, car.getMark());
+//            statement.setString(2, car.getModel());
+//            statement.setInt(3, car.getPrice());
+//            statement.setLong(4, car.getId());
+//
+//            System.out.println("Values updated: " + statement.executeUpdate());
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            Connector.closeConnections(connection, statement);
+//        }
+//
+//    }
+//
+//    @Override
+//    public int removeById(long id) {
+//        Connection connection = Connector.getConnection();
+//        PreparedStatement statement = null;
+//
+//        if(getById(id).isPresent()) {
+//            try {
+//                statement = connection.prepareStatement("DELETE FROM cars WHERE id = ?");
+//                statement.setLong(1, id);
+//                return statement.executeUpdate();
+//
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            } finally {
+//                Connector.closeConnections(connection, statement);
+//            }
+//        }
+//
+//        return 0;
+//    }
+//
+//    @Override
+//    public int removeByMark(String mark) {
+//        Connection connection = Connector.getConnection();
+//        PreparedStatement statement = null;
+//
+//        if(getMarkId(mark).isPresent()) {
+//            try {
+//                statement = connection.prepareStatement("DELETE FROM cars WHERE mark_id = ?");
+//                statement.setLong(1, getMarkId(mark).get());
+//                return statement.executeUpdate();
+//
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            } finally {
+//                Connector.closeConnections(connection, statement);
+//            }
+//        }
+//
+//        return 0;
+//    }
+//
+//    @Override
+//    public int removeByModel(String model) {
+//        Connection connection = Connector.getConnection();
+//        PreparedStatement statement = null;
+//
+//        try {
+//            statement = connection.prepareStatement("DELETE FROM cars WHERE model = ?");
+//            statement.setString(1, model);
+//            return statement.executeUpdate();
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } finally {
+//            Connector.closeConnections(connection, statement);
+//        }
+//
+//        return 0;
+//    }
 }

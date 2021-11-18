@@ -1,72 +1,53 @@
 import DAO.*;
 import Entity.Car;
 import Entity.Client;
+import Entity.Mark;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    private final static IDAOFactory factory = DAOFactory.getInstance();
-    private final static ICarDAO carDAO = factory.getCarDAO();
-    private final static IClientDAO clientDAO = factory.getClientDAO();
+    private static SessionFactory factory;
+    private static CarRepository carDAO;
+    private static MarkRepository markDAO;
+    private static ClientRepository clientDAO;
+
+    Main() {
+        factory = new Configuration().configure().buildSessionFactory();
+        markDAO = new MarkDAO(factory);
+        carDAO = new CarDAO(factory, markDAO);
+        clientDAO = new ClientDAO(factory);
+    }
 
     public static void main(String[] args) {
+        new Main().logic();
+    }
 
-        printAll(carDAO.getAll());
+    void logic() {
+        List<Mark> markList = new ArrayList<>();
 
-        Car car1 = new Car();
+        markList.add(new Mark("Audi"));
+        markList.add(new Mark("Porsche"));
+        markList.add(new Mark("BMW"));
+        markList.add(new Mark("Lada"));
 
-        if (carDAO.getById(1).isPresent()) {
-            car1 = carDAO.getById(1).get();
-            System.out.println(car1);
+        for (Mark mark: markList) {
+            markDAO.add(mark);
         }
 
-        car1.setPrice(40000);
+        markList = markDAO.getAll();
+        printAll(markList);
 
-        carDAO.updateCar(car1);
+        carDAO.add(new Car("Lada", "Kalina", 7000));
+        carDAO.add(new Car("Porsche", "911", 50000));
+        carDAO.add(new Car("Toyota", "Camry", 40000));
 
-        if (carDAO.getById(car1.getId()).isPresent()) {
-            System.out.println(carDAO.getById(car1.getId()).get());
-        }
+        List<Car> carList = carDAO.getAll();
+        printAll(carList);
 
-        Car car2 = new Car("Lada", "Калина", 9000);
-
-        carDAO.add(car2);
-
-        printAll(carDAO.getAll());
-
-        if(carDAO.getCarId(car2).isPresent()) {
-            carDAO.removeById(carDAO.getCarId(car2).get());
-        }
-
-        printAll(carDAO.getAll());
-
-        carDAO.add(new Car("BMW", "X5", 20000));
-        carDAO.add(new Car("BMW", "i4", 30000));
-        printAll(carDAO.getAll());
-
-        carDAO.removeByModel("X5");
-        printAll(carDAO.getAll());
-
-        carDAO.removeByMark("BMW");
-        printAll(carDAO.getAll());
-
-        printAll(clientDAO.getAllClients());
-
-        clientDAO.addClient(new Client("Алексей", 40, "066-771-82-71"));
-
-        printAll(clientDAO.getAllClients());
-
-        if (clientDAO.getClient(4).isPresent()) {
-            System.out.println(clientDAO.getClient(4).get());
-        }
-
-        System.out.println(clientDAO.updateClient(1, new Client("Петр", 20, "099-555-55-22")));
-
-        printAll(clientDAO.getAllClients());
-
-        System.out.println(clientDAO.deleteClient(4));
-
-        printAll(clientDAO.getAllClients());
+        System.out.println(carDAO.getById(1).get());
     }
 
     private static <E> void printAll(List<E> list) {
@@ -81,3 +62,4 @@ public class Main {
         System.out.println("--------------------------------------------------------");
     }
 }
+
