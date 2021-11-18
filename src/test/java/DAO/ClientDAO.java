@@ -37,7 +37,8 @@ public class ClientDAO implements ClientRepository {
     @Override
     public Optional<Client> getClient(long id) {
         try (Session session = factory.openSession()){
-            Query<Client> query = session.createQuery("FROM Client WHERE id = :id", Client.class)
+            Query<Client> query = session
+                    .createQuery("FROM Client WHERE id = :id", Client.class)
                     .setParameter("id", id);
 
             Optional<Client> result = query.uniqueResultOptional();
@@ -56,7 +57,8 @@ public class ClientDAO implements ClientRepository {
     @Override
     public Optional<Long> getClientId(Client client) {
         try (Session session = factory.openSession()){
-            Query<Client> query = session.createQuery("FROM Client WHERE name = :name AND age = :age AND phone = :phone", Client.class)
+            Query<Client> query = session
+                    .createQuery("FROM Client WHERE name = :name AND age = :age AND phone = :phone", Client.class)
                     .setParameter("name", client.getName())
                     .setParameter("age", client.getAge())
                     .setParameter("phone", client.getPhone());

@@ -26,11 +26,12 @@ public class CarDAO implements CarRepository {
         if (getCarId(car).isEmpty()) {
 
             try (Session session = factory.openSession()){
-                if(markDAO.getMarkId(new Mark(car.getMark())) == 0) {
+
+                if(markDAO.getMarkId(new Mark(car.getMark())).isEmpty()) {
                     markDAO.add(new Mark(car.getMark()));
                 }
 
-                car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
+                car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())).get());
                 session.save(car);
 
             } catch (HibernateException e) {
@@ -52,7 +53,7 @@ public class CarDAO implements CarRepository {
             carList = session.createQuery("FROM Car", Car.class).list();
 
             for (Car car: carList) {
-                car.setMark(markDAO.getMark(car.getMarkId()));
+                car.setMark(markDAO.getMark(car.getMarkId()).get());
             }
 
         } catch (HibernateException e) {
@@ -76,7 +77,7 @@ public class CarDAO implements CarRepository {
 
             if (result.isPresent()) {
                 car = result.get();
-                car.setMark(markDAO.getMark(car.getMarkId()));
+                car.setMark(markDAO.getMark(car.getMarkId()).get());
             }
 
             return Optional.of(car);
@@ -90,23 +91,25 @@ public class CarDAO implements CarRepository {
 
     @Override
     public Optional<Long> getCarId(Car car) {
-        try (Session session = factory.openSession()){
-            car.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
+        Optional<Long> markId = markDAO.getMarkId(new Mark(car.getMark()));
 
-            Query<Car> query = session.createQuery("FROM Car WHERE markId = :markId AND model = :model AND price = :price", Car.class);
+        if(markId.isPresent()) {
+            try (Session session = factory.openSession()) {
+                Query<Car> query = session
+                        .createQuery("FROM Car WHERE markId = :markId AND model = :model AND price = :price", Car.class)
+                        .setParameter("markId", markId.get())
+                        .setParameter("model", car.getModel())
+                        .setParameter("price", car.getPrice());
 
-            query.setParameter("markId", car.getMarkId());
-            query.setParameter("model", car.getModel());
-            query.setParameter("price", car.getPrice());
+                Optional<Car> result = query.uniqueResultOptional();
 
-            Optional<Car> result = query.uniqueResultOptional();
+                if (result.isPresent()) {
+                    return Optional.of(result.get().getId());
+                }
 
-            if (result.isPresent()) {
-                return Optional.of(result.get().getId());
+            } catch (HibernateException e) {
+                e.printStackTrace();
             }
-
-        } catch (HibernateException e) {
-            e.printStackTrace();
         }
 
         return Optional.empty();
@@ -119,12 +122,16 @@ public class CarDAO implements CarRepository {
                 return;
             }
 
+            if(markDAO.getMarkId(new Mark(car.getMark())).isEmpty()) {
+                markDAO.add(new Mark(car.getMark()));
+            }
+
             session.beginTransaction();
             Car oldCar = session.get(Car.class, id);
 
             if(!oldCar.equals(car)) {
-                oldCar.setMarkId(markDAO.getMarkId(new Mark(car.getMark())));
-                oldCar.setMark(markDAO.getMark(oldCar.getMarkId()));
+                oldCar.setMarkId(markDAO.getMarkId(new Mark(car.getMark())).get());
+                oldCar.setMark(car.getMark());
                 oldCar.setModel(car.getModel());
                 oldCar.setPrice(car.getPrice());
             }
@@ -155,13 +162,14 @@ public class CarDAO implements CarRepository {
 
     @Override
     public void removeByMark(String mark) {
-        long markId = markDAO.getMarkId(new Mark(mark));
-        if(markId != 0) {
+        Optional<Long> markId = markDAO.getMarkId(new Mark(mark));
+
+        if(markId.isPresent()) {
             try (Session session = factory.openSession()){
                 session.beginTransaction();
                 List<Car> carList = session
                         .createQuery("FROM Car WHERE markId = :markId", Car.class)
-                        .setParameter("markId", markId).list();
+                        .setParameter("markId", markId.get()).list();
 
                 for (Car car: carList) {
                     session.delete(car);

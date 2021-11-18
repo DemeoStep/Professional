@@ -42,28 +42,39 @@ public class MarkDAO implements MarkRepository {
     }
 
     @Override
-    public long getMarkId(Mark mark) {
+    public Optional<Long> getMarkId(Mark mark) {
         try(Session session = factory.openSession()) {
-            Query<Mark> query = session.createQuery("FROM Mark WHERE mark = :markName", Mark.class);
-            query.setParameter("markName", mark.getMark());
+            Query<Mark> query = session
+                    .createQuery("FROM Mark WHERE mark = :markName", Mark.class)
+                    .setParameter("markName", mark.getMark());
 
-            if (query.uniqueResultOptional().isPresent()) {
-                return query.getSingleResult().getId();
+            Optional<Mark> result = query.uniqueResultOptional();
+
+            if (result.isPresent()) {
+                return Optional.of(result.get().getId());
             }
         } catch (HibernateException e) {
             e.printStackTrace();
         }
-        return 0;
+        return Optional.empty();
     }
 
     @Override
-    public String getMark(long id) {
+    public Optional<String> getMark(long id) {
         try (Session session = factory.openSession()) {
-            return session.get(Mark.class, id).getMark();
+            Query<Mark> query = session.createQuery("FROM Mark WHERE id = :id", Mark.class)
+                    .setParameter("id", id);
+
+            Optional<Mark> result = query.uniqueResultOptional();
+
+            if(result.isPresent()) {
+                return Optional.of(result.get().getMark());
+            }
+
         } catch (HibernateException e) {
             e.printStackTrace();
         }
-        return "";
+        return Optional.empty();
     }
 
 }

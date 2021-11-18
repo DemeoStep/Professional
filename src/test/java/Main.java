@@ -1,7 +1,5 @@
 import DAO.*;
-import Entity.Car;
-import Entity.Client;
-import Entity.Mark;
+import Entity.*;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
@@ -36,18 +34,30 @@ public class Main {
             markDAO.add(mark);
         }
 
+        printLine();
+        System.out.println("Mark.add / Mark.getAll");
+
+        printAll(markDAO.getAll());
+
         carDAO.add(new Car("Lada", "Kalina", 7000));
         carDAO.add(new Car("Porsche", "911", 50000));
         carDAO.add(new Car("Toyota", "Camry", 40000));
 
+        printLine();
+        System.out.println("Car.add / Car.getAll");
+
         printAll(carDAO.getAll());
 
+        printLine();
+        System.out.println("Car.getById (1)");
         carDAO.getById(1).ifPresent(System.out::println);
 
-        carDAO.updateCar(1, new Car("BMW", "X5", 28000));
+        carDAO.updateCar(1, new Car("Ferrari", "Roma", 280000));
 
         printAll(carDAO.getAll());
 
+        printLine();
+        System.out.println("Car.removeById (3)");
         carDAO.removeById(3);
 
         carDAO.add(new Car("Lada", "Kalina", 7000));
@@ -58,23 +68,38 @@ public class Main {
 
         carDAO.removeByMark("Lada");
 
+        printLine();
+        System.out.println("Car.removeByMark (\"Lada\")");
         printAll(carDAO.getAll());
 
         carDAO.removeByModel("911");
 
+        printLine();
+        System.out.println("Car.removeByModel (\"911\")");
         printAll(carDAO.getAll());
+
+        printLine();
+        System.out.println("Client.add / Client.getAll");
 
         clientDAO.addClient(new Client("Alex", 23, "050-555-55-55"));
         clientDAO.addClient(new Client("Max", 25, "050-222-22-22"));
 
         printAll(clientDAO.getAllClients());
 
+        printLine();
+        System.out.println("Client.getClient");
+        printLine();
         clientDAO.getClient(1).ifPresent(System.out::println);
+        printLine();
 
+        printLine();
+        System.out.println("Client.deleteClient");
         clientDAO.deleteClient(1);
 
         printAll(clientDAO.getAllClients());
 
+        printLine();
+        System.out.println("Client.updateClient");
         clientDAO.updateClient(2, new Client("MaXXX", 40, "050-333-33-33"));
 
         printAll(clientDAO.getAllClients());
