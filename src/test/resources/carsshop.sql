@@ -1,3 +1,0 @@
-DROP DATABASE IF EXISTS carsshop;
-CREATE DATABASE carsshop;
-USE carsshop;

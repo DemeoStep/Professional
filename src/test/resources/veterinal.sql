@@ -1,0 +1,2 @@
+DROP DATABASE IF EXISTS veterinal;
+CREATE DATABASE veterinal;

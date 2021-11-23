@@ -3,9 +3,9 @@
         "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
     <session-factory>
-        <property name="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQL57Dialect</property>
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
-        <property name="hibernate.connection.url">jdbc:mysql://192.168.12.2:3306/carsshop</property>
+        <property name="hibernate.connection.url">jdbc:mysql://192.168.12.2:3306/veterinal</property>
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.connection.password">myensql</property>
 
@@ -15,8 +15,9 @@
 
         <property name="show_sql">false</property>
 
-        <mapping class="Entity.Car"/>
-        <mapping class="Entity.Mark"/>
-        <mapping class="Entity.Client"/>
+        <mapping class="Entity.Animal"/>
+        <mapping class="Entity.AnimalDetails"/>
+        <mapping class="Entity.Vet"/>
+        <mapping class="Entity.Aviary"/>
     </session-factory>
 </hibernate-configuration>
