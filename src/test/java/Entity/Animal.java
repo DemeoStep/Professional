@@ -18,7 +18,7 @@ public class Animal {
     long id;
     @Column(unique = true)
     String name;
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "details_id", referencedColumnName = "id")
     AnimalDetails details;
     @ManyToOne
@@ -33,5 +33,12 @@ public class Animal {
         this.details = details;
         this.vet = vet;
         this.aviary = aviary;
+    }
+
+    public void copyFrom(Animal animal) {
+        this.name = animal.name;
+        this.details = animal.details;
+        this.vet = animal.vet;
+        this.aviary = animal.aviary;
     }
 }

@@ -1,5 +1,6 @@
 package DAO;
 
+import Entity.Animal;
 import Entity.Vet;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -23,10 +24,8 @@ public class VetDAO implements VetRepository{
 
         if (getId(vet).isEmpty()) {
             try (Session session = factory.openSession()) {
-                session.beginTransaction();
                 vetId = Optional.of((Long) session.save(vet));
 
-                session.getTransaction().commit();
             } catch (HibernateException e) {
                 e.printStackTrace();
             }
@@ -39,9 +38,7 @@ public class VetDAO implements VetRepository{
     public List<Vet> getAll() {
         List<Vet> list = new ArrayList<>();
         try (Session session = factory.openSession()) {
-            session.beginTransaction();
             list = session.createQuery("FROM Vet", Vet.class).list();
-            session.getTransaction().commit();
         } catch (HibernateException e) {
             e.printStackTrace();
         }
@@ -52,7 +49,10 @@ public class VetDAO implements VetRepository{
     public Optional<Vet> getById(long id) {
         Optional<Vet> result = Optional.empty();
         try (Session session = factory.openSession()) {
-            result = Optional.of(session.get(Vet.class, id));
+            result = session.createQuery("FROM Vet WHERE id = :id", Vet.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
+
         } catch (HibernateException e) {
             e.printStackTrace();
         }
@@ -63,8 +63,12 @@ public class VetDAO implements VetRepository{
     public void updateById(long id, Vet vet) {
         try (Session session = factory.openSession()) {
             session.beginTransaction();
-            Vet oldVet = session.get(Vet.class, id);
-            oldVet.copyOf(vet);
+
+            session.createQuery("FROM Vet WHERE id = :id", Vet.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(value -> value.copyFrom(vet));
+
 
             session.getTransaction().commit();
         } catch (HibernateException e) {
@@ -76,8 +80,11 @@ public class VetDAO implements VetRepository{
     public void removeById(long id) {
         try (Session session = factory.openSession()) {
             session.beginTransaction();
-            Vet vet = session.get(Vet.class, id);
-            session.delete(vet);
+
+            session.createQuery("FROM Vet WHERE id = :id", Vet.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(session::delete);
 
             session.getTransaction().commit();
         } catch (HibernateException e) {

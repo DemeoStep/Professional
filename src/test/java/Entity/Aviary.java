@@ -26,6 +26,11 @@ public class Aviary {
         this.size = size;
     }
 
+    public void copyFrom(Aviary aviary) {
+        this.biome = aviary.biome;
+        this.size = aviary.size;
+    }
+
     @Override
     public String toString() {
         return "Aviary{" +

@@ -1,11 +1,13 @@
 package DAO;
 
 import Entity.Aviary;
+import Entity.Animal;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,12 +38,16 @@ public class AviaryDAO implements AviaryRepository{
 
     @Override
     public List<Aviary> getAll() {
+        List<Aviary> list = new ArrayList<>();
+
         try (Session session = factory.openSession()) {
+
+            list = session.createQuery("FROM Aviary ", Aviary.class).list();
 
         } catch (HibernateException e) {
             e.printStackTrace();
         }
-        return null;
+        return list;
     }
 
     @Override
@@ -49,10 +55,11 @@ public class AviaryDAO implements AviaryRepository{
         Optional<Aviary> result = Optional.empty();
 
         try (Session session = factory.openSession()) {
-            session.beginTransaction();
-            result = Optional.of(session.get(Aviary.class, id));
 
-            session.getTransaction().commit();
+            result = session.createQuery("FROM Aviary WHERE id = :id", Aviary.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
+
         } catch (HibernateException e) {
             e.printStackTrace();
         }
@@ -63,6 +70,15 @@ public class AviaryDAO implements AviaryRepository{
     public void updateById(long id, Aviary aviary) {
         try (Session session = factory.openSession()) {
 
+            session.beginTransaction();
+
+            session.createQuery("FROM Aviary WHERE id = :id", Aviary.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(value -> value.copyFrom(aviary));
+
+            session.getTransaction().commit();
+
         } catch (HibernateException e) {
             e.printStackTrace();
         }
@@ -71,7 +87,14 @@ public class AviaryDAO implements AviaryRepository{
     @Override
     public void removeById(long id) {
         try (Session session = factory.openSession()) {
+            session.beginTransaction();
 
+            session.createQuery("FROM Aviary WHERE id = :id", Aviary.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(session::delete);
+
+            session.getTransaction().commit();
         } catch (HibernateException e) {
             e.printStackTrace();
         }

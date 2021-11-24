@@ -30,7 +30,7 @@ public class Vet {
         this.clinic = clinic;
     }
 
-    public void copyOf(Vet vet) {
+    public void copyFrom(Vet vet) {
         this.name = vet.name;
         this.phone = vet.phone;
         this.clinic = vet.clinic;

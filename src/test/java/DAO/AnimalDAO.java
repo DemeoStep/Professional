@@ -5,14 +5,15 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class AnimalDAO implements AnimalRepository {
-    private SessionFactory factory;
-    private VetRepository vetDAO;
-    private AnimalDetailsRepository animalDetailsDAO;
-    private AviaryRepository aviaryDAO;
+    private final SessionFactory factory;
+    private final VetRepository vetDAO;
+    private final AnimalDetailsRepository animalDetailsDAO;
+    private final AviaryRepository aviaryDAO;
 
     public AnimalDAO(SessionFactory factory, VetRepository vetDAO, AnimalDetailsRepository animalDetailsDAO, AviaryRepository aviaryDAO) {
         this.factory = factory;
@@ -28,26 +29,23 @@ public class AnimalDAO implements AnimalRepository {
 
         try (Session session = factory.openSession()) {
 
-            if(vetDAO.add(animal.getVet()).isEmpty()) {
-                vetDAO.getId(animal.getVet()).flatMap(id -> vetDAO.getById(id)).ifPresent(animal::setVet);
+            if (vetDAO.add(animal.getVet()).isEmpty()) {
+                vetDAO.getId(animal.getVet()).flatMap(vetDAO::getById).ifPresent(animal::setVet);
             }
 
-            if(aviaryDAO.add(animal.getAviary()).isEmpty()) {
-                aviaryDAO.getId(animal.getAviary()).flatMap(id -> aviaryDAO.getById(id)).ifPresent(animal::setAviary);
+            if (aviaryDAO.add(animal.getAviary()).isEmpty()) {
+                aviaryDAO.getId(animal.getAviary()).flatMap(aviaryDAO::getById).ifPresent(animal::setAviary);
             }
 
             animalDetailsId = animalDetailsDAO.add(animal.getDetails());
 
-            session.beginTransaction();
             animalId = Optional.of((Long) session.save(animal));
-
-            session.getTransaction().commit();
 
         } catch (HibernateException e) {
             e.printStackTrace();
         } finally {
-            if(animalId.isEmpty()) {
-                animalDetailsId.ifPresent(id -> animalDetailsDAO.remove(id));
+            if (animalId.isEmpty()) {
+                animalDetailsId.ifPresent(animalDetailsDAO::removeById);
             }
         }
 
@@ -56,52 +54,66 @@ public class AnimalDAO implements AnimalRepository {
 
     @Override
     public List<Animal> getAll() {
-        Session session = factory.openSession();
+        List<Animal> list = new ArrayList<>();
 
-        List<Animal> list = session.createQuery("from Animal", Animal.class).list();
+        try (Session session = factory.openSession()) {
 
-        session.close();
+            list = session.createQuery("from Animal", Animal.class).list();
+
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        }
 
         return list;
     }
 
     @Override
-    public Animal getById(long id) {
+    public Optional<Animal> getById(long id) {
+        Optional<Animal> animal = Optional.empty();
+        try (Session session = factory.openSession()) {
 
-        return factory.openSession().get(Animal.class, id);
+            animal = session.createQuery("FROM Animal WHERE id = :id", Animal.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
+
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        }
+
+        return animal;
     }
 
     @Override
     public void updateById(long id, Animal animal) {
-
-        if (factory.openSession().get(Animal.class, id) != null) {
-            Session session = factory.openSession();
-
+        try (Session session = factory.openSession()) {
             session.beginTransaction();
 
-            animal.setId(id);
+            session.createQuery("FROM Animal WHERE id = :id", Animal.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(value -> value.copyFrom(animal));
 
-            session.update(animal);
-            session.flush();
             session.getTransaction().commit();
-
-            session.close();
+        } catch (HibernateException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void removeById(long id) {
-        Animal animal = factory.openSession().get(Animal.class, id);
-
-        if (animal != null) {
-            Session session = factory.openSession();
+        try (Session session = factory.openSession()) {
             session.beginTransaction();
 
-            session.delete(animal);
-            session.flush();
+            session.createQuery("FROM Animal WHERE id = :id", Animal.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional()
+                    .ifPresent(session::delete);
+
             session.getTransaction().commit();
 
-            session.close();
+
+        } catch (HibernateException e) {
+            e.printStackTrace();
         }
     }
 }
